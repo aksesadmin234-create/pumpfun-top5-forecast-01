@@ -9,17 +9,17 @@ from datetime import datetime
 INPUT = os.environ.get("MAKEFUN_INPUT_DIR", "/input")
 OUTPUT = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
 
-# ---- tunable parameters ----
+# ---- tunable parameters (tuned on the practice history's marks) ----
 SIMS = 1500          # sims per answer read
 DRIFT_SHRINK = 0.30  # shrink on recent momentum
-SIGMA_BASE = 0.13    # log10 sd per sqrt(10 min)
-SIGMA_FLOOR = 0.10
-GHOST_RATE = 0.55    # newcomer coefficient
+SIGMA_BASE = 0.45    # log10 sd per sqrt(10 min)
+SIGMA_FLOOR = 0.45
+GHOST_RATE = 1.20    # newcomer coefficient
 GHOST_POW = 0.75     # newcomer growth with horizon
-GHOST_CAP = 3.2      # max expected newcomer count
-GHOST_MU = 3.15      # mean log10 cap of a serious newcomer
-GHOST_SD = 0.55
-SIZE_SD_EXTRA = 0.0  # extra widening on sizes
+GHOST_CAP = 4.0      # max expected newcomer count
+GHOST_MU = 3.30      # mean log10 cap of a serious newcomer
+GHOST_SD = 0.50
+SIZE_TEMP = 1.60     # sharpen (>1) the size histogram
 MAX_CAND = 160
 
 
@@ -154,17 +154,17 @@ def main():
             if p >= 1e-4:
                 probabilities.append({"mint": mint, "place": place, "p": round(p, 6)})
 
-    # sizes: bin frequencies per place, keep the meaningful ones
+    # sizes: bin frequencies per place, sharpen with SIZE_TEMP, keep meaningful ones
     sizes = []
     for place in range(1, places + 1):
         tot = sum(size_cnt[place])
         if tot == 0:
             continue
-        rows = [(size_cnt[place][b] / tot, b) for b in range(nbin)]
-        rows = [(p, b) for p, b in rows if p >= 1e-4]
-        # keep at most 40 bins, renormalise the kept mass
-        rows.sort(reverse=True)
-        rows = rows[:40]
+        raw = {b: (size_cnt[place][b] / tot) ** SIZE_TEMP
+               for b in range(nbin) if size_cnt[place][b] > 0}
+        ssum = sum(raw.values())
+        rows = sorted(((v / ssum, b) for b, v in raw.items()), reverse=True)
+        rows = [(p, b) for p, b in rows if p >= 1e-4][:40]
         s = sum(p for p, _ in rows)
         for p, b in rows:
             sizes.append({"place": place, "bin": b, "p": round(p / s, 6)})
