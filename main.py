@@ -148,11 +148,14 @@ def main():
                 rows.append((cnt, mint))
         rows.sort(reverse=True)
         rows = rows[:100]
-        # renormalise: leave some unnamed mass for newcomers (already implicit via ghosts)
-        for cnt, mint in rows:
-            p = cnt / total_sims
-            if p >= 1e-4:
-                probabilities.append({"mint": mint, "place": place, "p": round(p, 6)})
+        rounded = [(round(cnt / total_sims, 6), mint) for cnt, mint in rows if cnt / total_sims >= 1e-4]
+        excess = sum(p for p, _ in rounded) - 0.999999
+        if excess > 0:
+            rounded.sort(reverse=True)
+            rounded[0] = (round(rounded[0][0] - excess, 6), rounded[0][1])
+        for p, mint in rounded:
+            if p > 0:
+                probabilities.append({"mint": mint, "place": place, "p": p})
 
     # sizes: bin frequencies per place, sharpen with SIZE_TEMP, keep meaningful ones
     sizes = []
@@ -166,8 +169,15 @@ def main():
         rows = sorted(((v / ssum, b) for b, v in raw.items()), reverse=True)
         rows = [(p, b) for p, b in rows if p >= 1e-4][:40]
         s = sum(p for p, _ in rows)
-        for p, b in rows:
-            sizes.append({"place": place, "bin": b, "p": round(p / s, 6)})
+        # round to 6 dp, then shave the largest so the place sums to <= 1.0
+        rounded = [(round(p / s, 6), b) for p, b in rows]
+        excess = sum(p for p, _ in rounded) - 0.999999
+        if excess > 0:
+            rounded.sort(reverse=True)
+            rounded[0] = (round(rounded[0][0] - excess, 6), rounded[0][1])
+        for p, b in rounded:
+            if p > 0:
+                sizes.append({"place": place, "bin": b, "p": p})
 
     # top5: by expected rank (highest mean place probability)
     score = {}
