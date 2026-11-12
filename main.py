@@ -14,16 +14,16 @@ SIMS = 1200          # sims per answer read
 DRIFT_SHRINK = 0.50  # keep half of recent momentum
 SIGMA_BASE = 0.22    # log10 sd per sqrt(10 min)
 SIGMA_FLOOR = 0.22
-GHOST_RATE = 1.20    # newcomer coefficient
+GHOST_RATE = 2.50    # newcomer coefficient
 GHOST_POW = 0.75
-GHOST_CAP = 4.0
+GHOST_CAP = 8.0
 GHOST_MU = 3.40      # mean log10 cap of a serious newcomer
 GHOST_SD = 0.55
 MAX_CAND = 160
 
 # ---- size model (cap at rank k projected with its own growth) ----
-GROWTH_SHRINK = 0.50  # project half the observed per-rank growth
-SIZE_SD = 0.38        # base sd of log10 cap
+GROWTH_SHRINK = 0.40  # project the observed per-rank growth
+SIZE_SD = 0.42        # base sd of log10 cap
 SIZE_SD_MAX = 0.85
 
 
